@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STRATEGY — Berkshire vs GMOM</title>
+<style>
+:root {
+  --bg: #f4f6f9; --surface: #fff; --border: #dde3ec;
+  --text: #1a2332; --muted: #6b7c93;
+  --accent-a: #e07b00; --accent-b: #1a6fcf;
+  --green: #16a34a; --red: #dc2626; --amber: #d97706;
+  --mono: 'JetBrains Mono','Fira Code','Courier New',monospace;
+  --sans: 'Segoe UI',system-ui,sans-serif;
+  --r: 8px; --shadow: 0 1px 4px rgba(0,0,0,.07);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--sans); background: var(--bg); color: var(--text); font-size: 13px; }
+
+/* ── HEADER ── */
+header {
+  background: #0d1526; color: #fff;
+  padding: 14px 24px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 2px solid #1a2e4a;
+}
+.logo { font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: .15em; }
+.logo span { color: #5a7a9a; }
+.header-meta { font-family: var(--mono); font-size: 10px; color: #5a7a9a; }
+
+/* ── TABS ── */
+nav {
+  display: flex; background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+}
+.tab {
+  padding: 11px 20px; font-size: 12px; font-weight: 600;
+  color: var(--muted); border-bottom: 2px solid transparent;
+  cursor: pointer; transition: all .15s;
+  background: none; border-top: none; border-left: none; border-right: none;
+}
+.tab:hover { color: var(--text); }
+.tab.active-a { color: var(--accent-a); border-bottom-color: var(--accent-a); }
+.tab.active-b { color: var(--accent-b); border-bottom-color: var(--accent-b); }
+.tab.active-c { color: #7c3aed; border-bottom-color: #7c3aed; }
+
+/* ── MAIN ── */
+main { padding: 24px; max-width: 1400px; margin: 0 auto; }
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ── SECTION TITLE ── */
+.section-title {
+  font-family: var(--mono); font-size: 9px; font-weight: 700;
+  letter-spacing: .12em; color: var(--muted); text-transform: uppercase;
+  margin-bottom: 12px; padding-bottom: 7px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+
+/* ── STRATEGY HEADER ── */
+.strategy-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 18px; border-radius: var(--r);
+  margin-bottom: 20px; border: 1px solid var(--border);
+}
+.strategy-header.a { background: #fff8f0; border-color: #f59e0b; }
+.strategy-header.b { background: #eff6ff; border-color: #93c5fd; }
+.sh-icon { font-size: 28px; }
+.sh-title { font-size: 16px; font-weight: 700; }
+.sh-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+/* ── ETF GRID ── */
+.etf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-bottom: 24px; }
+
+.etf-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r); overflow: hidden; box-shadow: var(--shadow);
+}
+.etf-card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 12px; border-bottom: 1px solid var(--border);
+  background: #fafafa;
+}
+.etf-ticker { font-family: var(--mono); font-size: 12px; font-weight: 700; }
+.etf-role { font-size: 9px; color: var(--muted); font-family: var(--mono); }
+.signal-badge {
+  font-size: 9px; font-weight: 700; padding: 2px 8px;
+  border-radius: 3px; letter-spacing: .05em;
+}
+.sig-buy  { background: #dcfce7; color: #15803d; }
+.sig-sell { background: #fee2e2; color: #b91c1c; }
+.sig-hold { background: #fef9c3; color: #854d0e; }
+.sig-cash { background: #f1f5f9; color: #475569; }
+.sig-watch { background: #e0f2fe; color: #0369a1; }
+.sig-dash { background: #f1f5f9; color: #94a3b8; }
+
+.etf-card-body { padding: 10px 12px; }
+
+.etf-price { font-family: var(--mono); font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+.etf-name  { font-size: 10px; color: var(--muted); margin-bottom: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.metrics-row { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+.metric { text-align: center; min-width: 50px; }
+.metric-val { font-family: var(--mono); font-size: 11px; font-weight: 600; }
+.metric-lbl { font-size: 8px; color: var(--muted); letter-spacing: .05em; text-transform: uppercase; }
+.pos { color: var(--green); } .neg { color: var(--red); } .neu { color: var(--muted); }
+
+/* ── EMA INDICATOR ── */
+.ema-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 10px; }
+.ema-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.ema-on  { background: var(--green); }
+.ema-off { background: var(--red); }
+
+/* ── AO BAR ── */
+.ao-bar-wrap { margin-bottom: 4px; }
+.ao-bar-label { display: flex; justify-content: space-between; font-size: 9px; color: var(--muted); margin-bottom: 2px; font-family: var(--mono); }
+.ao-bar-track { height: 6px; background: var(--border); border-radius: 3px; position: relative; overflow: hidden; }
+.ao-bar-fill  { height: 100%; border-radius: 3px; position: absolute; top: 0; }
+.ao-zones { display: flex; height: 6px; position: absolute; top: 0; left: 0; right: 0; }
+.ao-zone-buy  { flex: 0 0 25%; background: rgba(22,163,74,.15); }
+.ao-zone-hold { flex: 0 0 50%; background: rgba(217,119,6,.08); }
+.ao-zone-sell { flex: 0 0 25%; background: rgba(220,38,38,.15); }
+
+/* ── MOMENTUM BAR (B) ── */
+.momentum-bar { height: 4px; background: var(--border); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+.momentum-fill { height: 100%; border-radius: 2px; background: var(--accent-b); }
+
+/* ── RANKING TABLE ── */
+.rank-table { width: 100%; border-collapse: collapse; }
+.rank-table th { font-family: var(--mono); font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); text-align: left; padding: 6px 10px; border-bottom: 2px solid var(--border); }
+.rank-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 12px; }
+.rank-table tr:hover td { background: #f8fafc; }
+.rank-num { font-family: var(--mono); font-weight: 700; color: var(--accent-b); }
+
+/* ── CONFRONTO ── */
+.confronto-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+@media(max-width:700px){ .confronto-grid { grid-template-columns: 1fr; } }
+.confronto-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 16px; box-shadow: var(--shadow); }
+.confronto-card h3 { font-size: 13px; font-weight: 700; margin-bottom: 12px; }
+.metric-big { font-family: var(--mono); font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+.metric-big-lbl { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; }
+
+/* ── CHART CANVAS ── */
+.chart-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 16px; margin-bottom: 20px; box-shadow: var(--shadow); }
+canvas { width: 100%; display: block; }
+
+/* ── LOADING ── */
+.loading { padding: 40px; text-align: center; color: var(--muted); font-family: var(--mono); font-size: 11px; letter-spacing: .08em; }
+
+/* ── EMPTY ── */
+.empty { padding: 30px; text-align: center; color: var(--muted); font-size: 11px; font-family: var(--mono); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">STRATEGY<span> / </span>BERKSHIRE vs GMOM</div>
+  <div class="header-meta">
+    <span id="updated-date">—</span> · <span id="etf-count">—</span> ETF monitorati
+  </div>
+</header>
+
+<nav>
+  <button class="tab active-a" onclick="showTab('a',this)">🏛️ BERKSHIRE (A)</button>
+  <button class="tab" onclick="showTab('b',this)">🌍 GMOM (B)</button>
+  <button class="tab" onclick="showTab('compare',this)">⚖️ CONFRONTO</button>
+</nav>
+
+<main>
+
+  <!-- ══ PANEL A — BERKSHIRE ══ -->
+  <div id="panel-a" class="panel active">
+    <div class="strategy-header a">
+      <div class="sh-icon">🏛️</div>
+      <div>
+        <div class="sh-title" style="color:var(--accent-a)">Strategia A — Berkshire Style</div>
+        <div class="sh-sub">Mean-reversion · EMA200 risk filter · AO normalizzato 100gg · Accumula nella debolezza</div>
+      </div>
+    </div>
+    <div class="section-title">
+      <span>Segnali operativi — 9 ETF</span>
+      <span id="a-last-signal" style="font-size:9px;color:var(--muted)">—</span>
+    </div>
+    <div class="etf-grid" id="grid-a">
+      <div class="loading">CARICAMENTO DATI...</div>
+    </div>
+    <div class="section-title">Performance storica</div>
+    <div class="chart-wrap">
+      <canvas id="chart-a" height="200"></canvas>
+    </div>
+  </div>
+
+  <!-- ══ PANEL B — GMOM ══ -->
+  <div id="panel-b" class="panel">
+    <div class="strategy-header b">
+      <div class="sh-icon">🌍</div>
+      <div>
+        <div class="sh-title" style="color:var(--accent-b)">Strategia B — GMOM Style</div>
+        <div class="sh-sub">Trend following · EMA200 risk filter · AO direzionale lungo · Compra la forza</div>
+      </div>
+    </div>
+    <div class="section-title">
+      <span>Ranking momentum — 9 ETF</span>
+      <span style="font-size:9px;color:var(--muted)">Score: 20% 1M · 30% 3M · 50% 6M</span>
+    </div>
+    <div id="ranking-b" style="margin-bottom:24px">
+      <div class="loading">CARICAMENTO...</div>
+    </div>
+    <div class="section-title">Segnali operativi</div>
+    <div class="etf-grid" id="grid-b">
+      <div class="loading">CARICAMENTO DATI...</div>
+    </div>
+    <div class="section-title">Performance storica</div>
+    <div class="chart-wrap">
+      <canvas id="chart-b" height="200"></canvas>
+    </div>
+  </div>
+
+  <!-- ══ PANEL CONFRONTO ══ -->
+  <div id="panel-compare" class="panel">
+    <div class="section-title">Confronto metriche — A vs B vs Benchmark (IWDA)</div>
+    <div class="confronto-grid" id="compare-grid">
+      <div class="loading">CARICAMENTO...</div>
+    </div>
+    <div class="section-title">Rendimento cumulativo — A vs B vs IWDA</div>
+    <div class="chart-wrap">
+      <canvas id="chart-compare" height="250"></canvas>
+    </div>
+    <div class="section-title" style="margin-top:20px">Correlazione tra ETF delle due strategie</div>
+    <div id="correlation-wrap">
+      <div class="loading">CARICAMENTO...</div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ══ STATE ══
+let DATA = null;
+const BASE_URL = window.location.origin + window.location.pathname.replace(/\/[^/]*$/, '');
+
+// ══ LOAD DATA ══
+async function loadData() {
+  try {
+    const r = await fetch(`${BASE_URL}/data/bte_data.json?v=${Date.now()}`);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    DATA = await r.json();
+    document.getElementById('updated-date').textContent = DATA.updated || '—';
+    const total = (DATA.strategy_a?.length || 0) + (DATA.strategy_b?.length || 0);
+    document.getElementById('etf-count').textContent = Math.max(DATA.strategy_a?.length || 0, DATA.strategy_b?.length || 0);
+    renderAll();
+  } catch(e) {
+    document.getElementById('grid-a').innerHTML = `<div class="empty">Dati non disponibili. Esegui il workflow GitHub Actions.<br><small>${e.message}</small></div>`;
+    document.getElementById('grid-b').innerHTML = `<div class="empty">Dati non disponibili.</div>`;
+  }
+}
+
+// ══ HELPERS ══
+const fmtP = (v, digits=2) => v == null ? '—' : (v >= 0 ? '+' : '') + v.toFixed(digits) + '%';
+const fmtN = (v, digits=2) => v == null ? '—' : v.toFixed(digits);
+const cls  = v => v == null ? 'neu' : v >= 0 ? 'pos' : 'neg';
+
+function signalBadge(sig) {
+  if (!sig || sig === '—') return `<span class="signal-badge sig-dash">—</span>`;
+  const map = { BUY:'sig-buy', SELL:'sig-sell', HOLD:'sig-hold', CASH:'sig-cash', WATCH:'sig-watch' };
+  return `<span class="signal-badge ${map[sig]||'sig-dash'}">${sig}</span>`;
+}
+
+// ══ RENDER ETF CARD (A) ══
+function renderCardA(etf) {
+  const norm = etf.ao_norm;
+  const normPct = norm != null ? Math.round(norm * 100) : 0;
+  const fillColor = norm == null ? '#94a3b8' : norm < 0.25 ? '#16a34a' : norm > 0.75 ? '#dc2626' : '#d97706';
+
+  return `<div class="etf-card">
+    <div class="etf-card-header">
+      <div>
+        <div class="etf-ticker">${etf.ticker.split('.')[0]}</div>
+        <div class="etf-role">${etf.role}</div>
+      </div>
+      ${signalBadge(etf.signal_a)}
+    </div>
+    <div class="etf-card-body">
+      <div class="etf-name" title="${etf.name}">${etf.name}</div>
+      <div class="etf-price">${fmtN(etf.price, 2)}</div>
+      <div class="ema-row">
+        <div class="ema-dot ${etf.above_ema200 ? 'ema-on' : 'ema-off'}"></div>
+        <span style="font-size:10px;color:var(--muted)">EMA200: ${fmtN(etf.ema200, 2)} · ${etf.above_ema200 ? 'RISK ON' : 'RISK OFF'}</span>
+      </div>
+      <div class="ao-bar-wrap">
+        <div class="ao-bar-label">
+          <span>BUY &lt;0.25</span>
+          <span>AO norm: ${norm != null ? norm.toFixed(2) : '—'}</span>
+          <span>SELL &gt;0.75</span>
+        </div>
+        <div class="ao-bar-track">
+          <div class="ao-zones">
+            <div class="ao-zone-buy"></div>
+            <div class="ao-zone-hold"></div>
+            <div class="ao-zone-sell"></div>
+          </div>
+          <div class="ao-bar-fill" style="width:${normPct}%;background:${fillColor};z-index:1"></div>
+        </div>
+      </div>
+      <div class="metrics-row" style="margin-top:8px">
+        <div class="metric"><div class="metric-val ${cls(etf.returns?.['1m'])}">${fmtP(etf.returns?.['1m'])}</div><div class="metric-lbl">1M</div></div>
+        <div class="metric"><div class="metric-val ${cls(etf.returns?.['3m'])}">${fmtP(etf.returns?.['3m'])}</div><div class="metric-lbl">3M</div></div>
+        <div class="metric"><div class="metric-val ${cls(etf.returns?.['6m'])}">${fmtP(etf.returns?.['6m'])}</div><div class="metric-lbl">6M</div></div>
+        <div class="metric"><div class="metric-val ${cls(etf.returns?.['1y'])}">${fmtP(etf.returns?.['1y'])}</div><div class="metric-lbl">1A</div></div>
+        <div class="metric"><div class="metric-val">${fmtN(etf.sharpe)}</div><div class="metric-lbl">Sharpe</div></div>
+        <div class="metric"><div class="metric-val neg">${fmtN(etf.max_drawdown)}%</div><div class="metric-lbl">MaxDD</div></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ══ RENDER ETF CARD (B) ══
+function renderCardB(etf) {
+  const score = etf.momentum_score;
+  const scorePct = score != null ? Math.min(Math.max((score + 30) / 60 * 100, 0), 100) : 0;
+  const aoLong = etf.ao_long;
+  const aoDir = aoLong != null ? (aoLong > 0 ? '▲ positivo' : '▼ negativo') : '—';
+  const aoDirColor = aoLong != null ? (aoLong > 0 ? 'var(--green)' : 'var(--red)') : 'var(--muted)';
+
+  return `<div class="etf-card">
+    <div class="etf-card-header">
+      <div>
+        <div class="etf-ticker">${etf.ticker.split('.')[0]}</div>
+        <div class="etf-role">${etf.role} ${etf.momentum_rank ? '· #'+etf.momentum_rank : ''}</div>
+      </div>
+      ${signalBadge(etf.signal_b)}
+    </div>
+    <div class="etf-card-body">
+      <div class="etf-name" title="${etf.name}">${etf.name}</div>
+      <div class="etf-price">${fmtN(etf.price, 2)}</div>
+      <div class="ema-row">
+        <div class="ema-dot ${etf.above_ema200 ? 'ema-on' : 'ema-off'}"></div>
+        <span style="font-size:10px;color:var(--muted)">EMA200: ${etf.above_ema200 ? 'RISK ON' : 'RISK OFF'}</span>
+        <span style="margin-left:auto;font-size:10px;color:${aoDirColor};font-family:var(--mono)">AO ${aoDir}</span>
+      </div>
+      <div class="momentum-bar">
+        <div class="momentum-fill" style="width:${scorePct}%"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--muted);font-family:var(--mono);margin-top:2px;margin-bottom:8px">
+        <span>Momentum score</span>
+        <span class="${cls(score)}">${score != null ? fmtP(score) : '—'}</span>
+      </div>
+      <div class="metrics-row">
+        <div class="metric"><div class="metric-val ${cls(etf.returns?.['1m'])}">${fmtP(etf.returns?.['1m'])}</div><div class="metric-lbl">1M</div></div>
+        <div class="metric"><div class="metric-val ${cls(etf.returns?.['3m'])}">${fmtP(etf.returns?.['3m'])}</div><div class="metric-lbl">3M</div></div>
+        <div class="metric"><div class="metric-val ${cls(etf.returns?.['6m'])}">${fmtP(etf.returns?.['6m'])}</div><div class="metric-lbl">6M</div></div>
+        <div class="metric"><div class="metric-val ${cls(etf.returns?.['1y'])}">${fmtP(etf.returns?.['1y'])}</div><div class="metric-lbl">1A</div></div>
+        <div class="metric"><div class="metric-val">${fmtN(etf.sharpe)}</div><div class="metric-lbl">Sharpe</div></div>
+        <div class="metric"><div class="metric-val neg">${fmtN(etf.max_drawdown)}%</div><div class="metric-lbl">MaxDD</div></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ══ RENDER RANKING B ══
+function renderRankingB() {
+  const etfs = [...(DATA.strategy_b || [])].filter(e => e.ticker !== 'XEON.DE');
+  etfs.sort((a,b) => (b.momentum_score||0) - (a.momentum_score||0));
+
+  const rows = etfs.map((e,i) => `<tr>
+    <td><span class="rank-num">#${i+1}</span></td>
+    <td style="font-family:var(--mono);font-weight:700">${e.ticker.split('.')[0]}</td>
+    <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.name}</td>
+    <td>${signalBadge(e.signal_b)}</td>
+    <td class="${cls(e.momentum_score)}" style="font-family:var(--mono)">${e.momentum_score != null ? fmtP(e.momentum_score) : '—'}</td>
+    <td class="${cls(e.returns?.['1m'])}" style="font-family:var(--mono)">${fmtP(e.returns?.['1m'])}</td>
+    <td class="${cls(e.returns?.['3m'])}" style="font-family:var(--mono)">${fmtP(e.returns?.['3m'])}</td>
+    <td class="${cls(e.returns?.['6m'])}" style="font-family:var(--mono)">${fmtP(e.returns?.['6m'])}</td>
+    <td style="font-size:10px;color:${e.above_ema200?'var(--green)':'var(--red)'};font-family:var(--mono)">${e.above_ema200?'✓ ON':'✗ OFF'}</td>
+  </tr>`).join('');
+
+  document.getElementById('ranking-b').innerHTML = `
+    <div style="overflow-x:auto">
+      <table class="rank-table">
+        <thead><tr>
+          <th>#</th><th>Ticker</th><th>Nome</th><th>Segnale</th>
+          <th>Score</th><th>1M</th><th>3M</th><th>6M</th><th>EMA200</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
+// ══ RENDER CONFRONTO ══
+function renderConfronto() {
+  const a = DATA.strategy_a || [];
+  const b = DATA.strategy_b || [];
+  const bench = DATA.benchmark;
+
+  const avgMetric = (arr, key) => {
+    const vals = arr.map(e => e[key]).filter(v => v != null);
+    return vals.length ? vals.reduce((s,v) => s+v, 0) / vals.length : null;
+  };
+
+  const avgRet = (arr, period) => avgMetric(arr.map(e => ({val: e.returns?.[period]})).map(x=>({ret:x.val})), 'ret');
+  const avgRetP = (arr, p) => { const vs = arr.map(e=>e.returns?.[p]).filter(v=>v!=null); return vs.length ? vs.reduce((s,v)=>s+v,0)/vs.length : null; };
+
+  const cards = [
+    { label:'Strategia A — Berkshire', color:'var(--accent-a)', items:[
+      { label:'Rendimento 1M medio',  val: fmtP(avgRetP(a,'1m')), cls: cls(avgRetP(a,'1m')) },
+      { label:'Rendimento 3M medio',  val: fmtP(avgRetP(a,'3m')), cls: cls(avgRetP(a,'3m')) },
+      { label:'Rendimento 6M medio',  val: fmtP(avgRetP(a,'6m')), cls: cls(avgRetP(a,'6m')) },
+      { label:'Sharpe medio',         val: fmtN(avgMetric(a,'sharpe')), cls:'neu' },
+      { label:'Max Drawdown medio',   val: fmtN(avgMetric(a,'max_drawdown'))+'%', cls:'neg' },
+      { label:'Volatilità media',     val: fmtN(avgMetric(a,'volatility'))+'%', cls:'neu' },
+      { label:'ETF in BUY',           val: a.filter(e=>e.signal_a==='BUY').length+' / '+a.length, cls:'pos' },
+      { label:'ETF sopra EMA200',     val: a.filter(e=>e.above_ema200).length+' / '+a.length, cls:'neu' },
+    ]},
+    { label:'Strategia B — GMOM', color:'var(--accent-b)', items:[
+      { label:'Rendimento 1M medio',  val: fmtP(avgRetP(b,'1m')), cls: cls(avgRetP(b,'1m')) },
+      { label:'Rendimento 3M medio',  val: fmtP(avgRetP(b,'3m')), cls: cls(avgRetP(b,'3m')) },
+      { label:'Rendimento 6M medio',  val: fmtP(avgRetP(b,'6m')), cls: cls(avgRetP(b,'6m')) },
+      { label:'Sharpe medio',         val: fmtN(avgMetric(b,'sharpe')), cls:'neu' },
+      { label:'Max Drawdown medio',   val: fmtN(avgMetric(b,'max_drawdown'))+'%', cls:'neg' },
+      { label:'Volatilità media',     val: fmtN(avgMetric(b,'volatility'))+'%', cls:'neu' },
+      { label:'ETF in BUY',           val: b.filter(e=>e.signal_b==='BUY').length+' / '+b.length, cls:'pos' },
+      { label:'ETF sopra EMA200',     val: b.filter(e=>e.above_ema200).length+' / '+b.length, cls:'neu' },
+    ]},
+  ];
+
+  document.getElementById('compare-grid').innerHTML = cards.map(card => `
+    <div class="confronto-card" style="border-top:3px solid ${card.color}">
+      <h3 style="color:${card.color}">${card.label}</h3>
+      ${card.items.map(item => `
+        <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:11px">
+          <span style="color:var(--muted)">${item.label}</span>
+          <span class="${item.cls}" style="font-family:var(--mono);font-weight:600">${item.val}</span>
+        </div>`).join('')}
+    </div>`).join('');
+
+  // Chart confronto
+  drawCompareChart();
+}
+
+// ══ CHARTS ══
+function drawLineChart(canvasId, datasets, labels) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const W = canvas.offsetWidth || 800;
+  const H = canvas.height || 200;
+  canvas.width  = W * devicePixelRatio;
+  canvas.height = H * devicePixelRatio;
+  canvas.style.width  = W + 'px';
+  canvas.style.height = H + 'px';
+
+  const ctx = canvas.getContext('2d');
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+
+  const PL=50, PR=20, PT=16, PB=30;
+  const cW=W-PL-PR, cH=H-PT-PB;
+
+  // Calcola range valori
+  const allVals = datasets.flatMap(d => d.values.filter(v => v!=null));
+  const minV = Math.min(...allVals);
+  const maxV = Math.max(...allVals);
+  const range = maxV - minV || 1;
+
+  const toX = i => PL + (i/(labels.length-1))*cW;
+  const toY = v => PT + cH - ((v-minV)/range)*cH;
+
+  // Background
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid orizzontale
+  ctx.strokeStyle = '#f0f0f0';
+  ctx.lineWidth = 1;
+  for (let i=0; i<=4; i++) {
+    const y = PT + (cH/4)*i;
+    ctx.beginPath(); ctx.moveTo(PL,y); ctx.lineTo(W-PR,y); ctx.stroke();
+    const val = maxV - (range/4)*i;
+    ctx.fillStyle = '#9a9a9a';
+    ctx.font = '9px monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(val.toFixed(1)+'%', PL-4, y+3);
+  }
+
+  // Linea zero se presente
+  if (minV < 0 && maxV > 0) {
+    const zy = toY(0);
+    ctx.strokeStyle = '#e2e2e2';
+    ctx.setLineDash([4,3]);
+    ctx.beginPath(); ctx.moveTo(PL,zy); ctx.lineTo(W-PR,zy); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // Dataset lines
+  datasets.forEach(ds => {
+    ctx.strokeStyle = ds.color;
+    ctx.lineWidth = ds.width || 1.5;
+    ctx.setLineDash(ds.dash || []);
+    ctx.beginPath();
+    let first = true;
+    ds.values.forEach((v,i) => {
+      if (v==null) { first=true; return; }
+      const x=toX(i), y=toY(v);
+      if (first) { ctx.moveTo(x,y); first=false; }
+      else ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+    ctx.setLineDash([]);
+  });
+
+  // X labels
+  const step = Math.max(1, Math.floor(labels.length/6));
+  ctx.fillStyle = '#9a9a9a';
+  ctx.font = '9px monospace';
+  ctx.textAlign = 'center';
+  labels.forEach((l,i) => {
+    if (i % step === 0 || i === labels.length-1) {
+      ctx.fillText(l.slice(5), toX(i), H-PB+14);
+    }
+  });
+
+  // Legenda
+  let lx = PL;
+  datasets.forEach(ds => {
+    ctx.fillStyle = ds.color;
+    ctx.fillRect(lx, 4, 16, 6);
+    ctx.fillStyle = '#333';
+    ctx.font = '9px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText(ds.label, lx+20, 11);
+    lx += ctx.measureText(ds.label).width + 36;
+  });
+}
+
+function drawChartA() {
+  const etfs = DATA.strategy_a || [];
+  if (!etfs.length) return;
+  // Usa il primo ETF come proxy (VWCE) + benchmark
+  const vwce = etfs.find(e => e.ticker.startsWith('VWCE'));
+  const bench = DATA.benchmark;
+  if (!vwce || !vwce.history) return;
+
+  const labels = vwce.history.dates;
+  const prices = vwce.history.prices;
+  const base = prices[0];
+  const retVwce = prices.map(p => (p/base-1)*100);
+
+  const datasets = [
+    { label:'VWCE (core A)', values: retVwce, color:'#e07b00', width:2 },
+  ];
+
+  if (bench?.history) {
+    const bp = bench.history.prices;
+    const bb = bp[0];
+    // Allinea lunghezza
+    const len = Math.min(labels.length, bp.length);
+    datasets.push({ label:'IWDA (benchmark)', values: bp.slice(-len).map(p=>(p/bb-1)*100), color:'#94a3b8', width:1.5, dash:[4,3] });
+  }
+
+  drawLineChart('chart-a', datasets, labels);
+}
+
+function drawChartB() {
+  const etfs = DATA.strategy_b || [];
+  if (!etfs.length) return;
+  const top = [...etfs].filter(e=>e.ticker!=='XEON.DE').sort((a,b)=>(b.momentum_score||0)-(a.momentum_score||0))[0];
+  const bench = DATA.benchmark;
+  if (!top?.history) return;
+
+  const labels = top.history.dates;
+  const prices = top.history.prices;
+  const base = prices[0];
+
+  const datasets = [
+    { label:`${top.ticker.split('.')[0]} (top momentum)`, values: prices.map(p=>(p/base-1)*100), color:'#1a6fcf', width:2 },
+  ];
+
+  if (bench?.history) {
+    const bp = bench.history.prices;
+    const bb = bp[0];
+    datasets.push({ label:'IWDA (benchmark)', values: bp.map(p=>(p/bb-1)*100), color:'#94a3b8', width:1.5, dash:[4,3] });
+  }
+
+  drawLineChart('chart-b', datasets, labels);
+}
+
+function drawCompareChart() {
+  const a = DATA.strategy_a || [];
+  const b = DATA.strategy_b || [];
+  const bench = DATA.benchmark;
+
+  // Usa VWCE per A e top momentum per B
+  const etfA = a.find(e=>e.ticker.startsWith('VWCE'));
+  const etfB = [...b].filter(e=>e.ticker!=='XEON.DE').sort((a,b)=>(b.momentum_score||0)-(a.momentum_score||0))[0];
+
+  if (!etfA?.history || !etfB?.history) return;
+
+  const labels = etfA.history.dates;
+  const pA = etfA.history.prices;
+  const pB = etfB.history.prices;
+
+  const datasets = [
+    { label:'Strategia A (VWCE)', values: pA.map(p=>(p/pA[0]-1)*100), color:'#e07b00', width:2 },
+    { label:`Strategia B (${etfB.ticker.split('.')[0]})`, values: pB.slice(-labels.length).map(p=>(p/pB[0]-1)*100), color:'#1a6fcf', width:2 },
+  ];
+
+  if (bench?.history) {
+    const bp = bench.history.prices;
+    datasets.push({ label:'IWDA benchmark', values: bp.map(p=>(p/bp[0]-1)*100), color:'#94a3b8', width:1, dash:[4,3] });
+  }
+
+  drawLineChart('chart-compare', datasets, labels);
+}
+
+// ══ RENDER ALL ══
+function renderAll() {
+  if (!DATA) return;
+
+  // Panel A
+  const gridA = document.getElementById('grid-a');
+  const a = DATA.strategy_a || [];
+  gridA.innerHTML = a.length
+    ? a.map(renderCardA).join('')
+    : '<div class="empty">Nessun dato disponibile per Strategia A.</div>';
+
+  const buyA = a.filter(e=>e.signal_a==='BUY').length;
+  document.getElementById('a-last-signal').textContent = `${buyA} BUY · ${a.filter(e=>e.signal_a==='SELL').length} SELL · ${a.filter(e=>e.signal_a==='HOLD').length} HOLD`;
+
+  // Panel B
+  const b = DATA.strategy_b || [];
+  document.getElementById('grid-b').innerHTML = b.length
+    ? b.map(renderCardB).join('')
+    : '<div class="empty">Nessun dato disponibile per Strategia B.</div>';
+  renderRankingB();
+
+  // Confronto
+  renderConfronto();
+
+  // Charts
+  setTimeout(() => {
+    drawChartA();
+    drawChartB();
+  }, 100);
+}
+
+// ══ TAB SWITCHING ══
+function showTab(name, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active-a','active-b','active-c'));
+  document.getElementById('panel-' + (name==='compare'?'compare':name)).classList.add('active');
+  const cls = name==='a'?'active-a':name==='b'?'active-b':'active-c';
+  btn.classList.add(cls);
+  setTimeout(() => {
+    if (name==='a') drawChartA();
+    if (name==='b') drawChartB();
+    if (name==='compare') drawCompareChart();
+  }, 50);
+}
+
+// ══ INIT ══
+loadData();
+</script>
+</body>
+</html>
