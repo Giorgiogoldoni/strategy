@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🦅 RAPTOR Trader Hub</title>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-42LW1SN97X"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-42LW1SN97X');
+</script>
+
+<style>
+:root{
+  --sw:162px;--tb:42px;
+  --bg:#f4f6f9;--sb:#0d1526;
+  --card:#fff;--border:#dde3ec;--accent:#e07b00;
+  --blue:#1a6fcf;--text:#1a2332;--muted:#6b7c93;
+  --green:#16a34a;--red:#dc2626;--shadow:0 1px 4px rgba(0,0,0,.07);
+  --monitor:#0f172a;--consulenza:#7c3aed;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;}
+
+/* ── TICKER BAR ── */
+#ticker-bar{height:var(--tb);background:#fff;border-bottom:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;right:0;z-index:300;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+#ticker-top{display:flex;align-items:center;height:26px;overflow:hidden;}
+#ticker-inner{display:flex;align-items:center;white-space:nowrap;padding-left:var(--sw);flex:1;overflow-x:auto;scrollbar-width:none;height:100%;}
+#ticker-inner::-webkit-scrollbar{display:none;}
+.tick-item{display:inline-flex;align-items:center;gap:4px;padding:0 10px;border-right:1px solid var(--border);height:100%;flex-shrink:0;}
+.tick-name{font-size:9px;font-weight:700;letter-spacing:.4px;color:var(--muted);text-transform:uppercase;}
+.tick-val{font-size:11px;font-weight:600;color:var(--text);}
+.tick-chg{font-size:10px;font-weight:600;}
+.tick-up{color:var(--green)}.tick-down{color:var(--red)}.tick-flat{color:var(--muted)}
+.tick-time{padding:0 10px;font-size:9px;color:var(--muted);flex-shrink:0;border-left:1px solid var(--border);height:100%;display:flex;align-items:center;gap:5px;}
+.tick-refresh{cursor:pointer;padding:2px 6px;border-radius:4px;background:var(--bg);border:1px solid var(--border);font-size:9px;color:var(--muted);}
+.tick-refresh:hover{background:var(--blue);color:#fff;border-color:var(--blue);}
+#ticker-legend{height:16px;background:#f8f9fa;border-top:1px solid var(--border);padding:0 10px 0 calc(var(--sw) + 8px);display:flex;align-items:center;gap:14px;overflow:hidden;}
+.tl-item{display:inline-flex;align-items:center;gap:3px;font-size:8px;color:var(--muted);white-space:nowrap;}
+.tl-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+
+/* ── LAYOUT ── */
+#layout{display:flex;flex:1;margin-top:var(--tb);height:calc(100vh - var(--tb));overflow:hidden;}
+
+/* ── SIDEBAR ── */
+#sidebar{width:var(--sw);min-width:var(--sw);height:100%;background:var(--sb);border-right:1px solid #1a2e4a;display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;transition:width .2s;}
+#sidebar.collapsed{width:42px;min-width:42px;}
+.sb-logo{padding:10px 8px;border-bottom:1px solid #1a2e4a;display:flex;align-items:center;gap:7px;flex-shrink:0;cursor:pointer;}
+.sb-logo-icon{width:26px;height:26px;background:#132040;border:1px solid #1a2e4a;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+.sb-logo-text{overflow:hidden;white-space:nowrap;}
+.sb-logo-text strong{display:block;font-size:10px;letter-spacing:1px;color:#fff;}
+.sb-logo-text span{font-size:7px;color:#3a5a7a;letter-spacing:1.5px;}
+#sidebar.collapsed .sb-logo-text{display:none;}
+nav{flex:1;padding:4px 3px;overflow-y:auto;overflow-x:hidden;}
+nav::-webkit-scrollbar{width:2px;}
+nav::-webkit-scrollbar-thumb{background:#1a2e4a;border-radius:2px;}
+.nav-section{font-size:7px;letter-spacing:1.5px;color:#3a5a7a;padding:7px 6px 2px;text-transform:uppercase;font-weight:700;white-space:nowrap;overflow:hidden;border-top:1px solid #1a2e4a;margin-top:3px;}
+.nav-section:first-child{border-top:none;margin-top:0;}
+#sidebar.collapsed .nav-section{visibility:hidden;height:18px;}
+.nav-item{display:flex;align-items:center;gap:6px;padding:5px 7px;border-radius:5px;cursor:pointer;font-size:10.5px;color:#5a7a9a;transition:all .12s;user-select:none;position:relative;margin-bottom:1px;white-space:nowrap;overflow:hidden;}
+.nav-item:hover{background:rgba(255,255,255,.06);color:#dce8f5;}
+.nav-item.active{background:rgba(26,111,207,.22);color:#fff;font-weight:600;}
+.nav-item.active::before{content:'';position:absolute;left:0;top:20%;bottom:20%;width:2.5px;background:var(--blue);border-radius:0 2px 2px 0;}
+.nav-item.monitor-item.active{background:rgba(15,23,42,.4);}
+.nav-item.monitor-item.active::before{background:#38bdf8;}
+.nav-item.consulenza-item.active{background:rgba(124,58,237,.25);}
+.nav-item.consulenza-item.active::before{background:#a78bfa;}
+.nav-icon{font-size:13px;width:18px;text-align:center;flex-shrink:0;}
+.nav-label{overflow:hidden;white-space:nowrap;}
+#sidebar.collapsed .nav-label,.badge{font-size:0}
+#sidebar:not(.collapsed) .badge{font-size:7px;padding:1px 4px;border-radius:3px;font-weight:700;margin-left:auto;flex-shrink:0;}
+.badge{background:var(--accent);color:#fff;}
+.badge-new{background:#0e7a3a;}
+.badge-live{background:#1a6fcf;}
+.sb-bottom{padding:6px 8px;border-top:1px solid #1a2e4a;flex-shrink:0;}
+.status-row{display:flex;align-items:center;gap:5px;font-size:9px;color:#5a7a9a;white-space:nowrap;overflow:hidden;}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--green);flex-shrink:0;animation:blink 2.5s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+#sidebar.collapsed .status-row span{display:none;}
+
+/* ── MAIN ── */
+#main{flex:1;height:100%;display:flex;flex-direction:column;overflow:hidden;}
+#topbar{display:none;height:34px;min-height:34px;background:#fff;border-bottom:1px solid var(--border);align-items:center;padding:0 14px;gap:10px;flex-shrink:0;}
+#topbar.visible{display:flex;}
+.tb-back{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);cursor:pointer;padding:3px 9px;border-radius:5px;border:1px solid var(--border);}
+.tb-back:hover{background:var(--bg);color:var(--text);}
+#tb-title{font-size:12px;font-weight:600;color:var(--text);}
+.tb-ext{margin-left:auto;font-size:10px;color:var(--muted);cursor:pointer;padding:3px 9px;border-radius:5px;text-decoration:none;border:1px solid var(--border);}
+.tb-ext:hover{background:var(--bg);color:var(--text);}
+
+/* ── HOME ── */
+#home-panel{flex:1;overflow-y:auto;padding:18px 22px;background:var(--bg);}
+#home-panel::-webkit-scrollbar{width:4px;}
+#home-panel::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+.home-header{display:flex;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border);}
+.home-title h1{font-size:19px;font-weight:700;}
+.home-title p{font-size:10px;color:var(--muted);margin-top:2px;letter-spacing:.7px;}
+.section-title{font-size:8px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;font-weight:700;margin-bottom:9px;margin-top:18px;padding-bottom:5px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;}
+.section-title.monitor-title{color:#38bdf8;border-bottom-color:#1e3a5f;}
+.section-title.consulenza-title{color:#a78bfa;border-bottom-color:#3b2a6e;}
+
+/* ── REGIME BANNER ── */
+#regime-widget{background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin-bottom:18px;display:flex;gap:18px;align-items:center;flex-wrap:wrap;box-shadow:var(--shadow);}
+#rw-regime{font-size:24px;font-weight:700;line-height:1;}
+
+/* ── MACRO TRIO ── */
+.macro-trio{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:6px;}
+@media(max-width:900px){.macro-trio{grid-template-columns:1fr;}}
+.macro-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px 16px;cursor:pointer;transition:all .14s;position:relative;overflow:hidden;box-shadow:var(--shadow);}
+.macro-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--mc-color,var(--blue));}
+.macro-card:hover{border-color:var(--mc-color,var(--blue));transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,0,0,.1);}
+.mc-header{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.mc-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.mc-title{font-size:13px;font-weight:700;color:var(--text);}
+.mc-sub{font-size:9px;color:var(--muted);margin-top:1px;}
+.mc-horizon{display:inline-flex;align-items:center;gap:4px;font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;margin-bottom:8px;}
+.mc-desc{font-size:10px;color:var(--muted);line-height:1.6;margin-bottom:10px;}
+.mc-value{font-size:18px;font-weight:700;line-height:1;margin-bottom:3px;}
+.mc-label{font-size:8px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;}
+.mc-btn{display:inline-flex;align-items:center;gap:4px;font-size:9px;font-weight:700;color:var(--mc-color,var(--blue));letter-spacing:.5px;text-transform:uppercase;margin-top:8px;}
+.mc-arrow{font-size:10px;}
+
+/* ── CARDS GRID ── */
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(205px,1fr));gap:9px;margin-bottom:8px;}
+.card{background:#fff;border:1px solid var(--border);border-radius:9px;padding:13px 15px;cursor:pointer;transition:all .14s;position:relative;overflow:hidden;box-shadow:var(--shadow);}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--card-accent,var(--blue));opacity:.6;}
+.card:hover{border-color:var(--card-accent,var(--blue));transform:translateY(-1px);box-shadow:0 4px 12px rgba(26,111,207,.1);}
+.card:hover::before{opacity:1;}
+.card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+.card-icon{width:32px;height:32px;background:rgba(26,111,207,.07);border:1px solid rgba(26,111,207,.12);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;}
+.card-num strong{font-size:16px;color:var(--text);display:block;line-height:1.1;text-align:right;}
+.card-num span{font-size:7px;letter-spacing:1px;color:var(--muted);}
+.card h3{font-size:12px;font-weight:700;margin-bottom:3px;}
+.card p{font-size:9.5px;color:var(--muted);line-height:1.5;}
+.card-btn{margin-top:8px;display:inline-flex;align-items:center;gap:4px;font-size:9px;font-weight:600;color:var(--blue);letter-spacing:.5px;text-transform:uppercase;}
+.sup-badge{font-size:7px;padding:1px 4px;border-radius:3px;color:#fff;vertical-align:middle;margin-left:3px;}
+
+/* ── MONITOR TRIO ── */
+.monitor-trio{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:8px;}
+@media(max-width:900px){.monitor-trio{grid-template-columns:1fr;}}
+.monitor-card{background:#0d1526;border:1px solid #1a2e4a;border-radius:10px;padding:14px 16px;cursor:pointer;transition:all .14s;position:relative;overflow:hidden;box-shadow:var(--shadow);}
+.monitor-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--mc-color,#38bdf8);}
+.monitor-card:hover{border-color:#38bdf8;transform:translateY(-1px);}
+.monitor-card .mc-title{color:#e2e8f0;}
+.monitor-card .mc-sub{color:#5a7a9a;}
+.monitor-card .mc-desc{color:#5a7a9a;}
+.monitor-card .mc-value{color:#38bdf8;}
+.monitor-card .mc-label{color:#3a5a7a;}
+.monitor-card .mc-btn{color:#38bdf8;}
+
+/* ── CONSULENZA TRIO ── */
+.consulenza-trio{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:8px;}
+@media(max-width:900px){.consulenza-trio{grid-template-columns:1fr;}}
+.consulenza-card{background:#fff;border:1px solid #e9d5ff;border-radius:10px;padding:14px 16px;cursor:pointer;transition:all .14s;position:relative;overflow:hidden;box-shadow:var(--shadow);}
+.consulenza-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--mc-color,#7c3aed);}
+.consulenza-card:hover{border-color:#7c3aed;transform:translateY(-1px);box-shadow:0 4px 14px rgba(124,58,237,.1);}
+.consulenza-card .mc-title{color:var(--text);}
+.consulenza-card .mc-sub{color:var(--muted);}
+.consulenza-card .mc-desc{color:var(--muted);}
+.consulenza-card .mc-btn{color:#7c3aed;}
+
+/* ── ETF TRIO ── */
+.etf-trio{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:8px;}
+@media(max-width:900px){.etf-trio{grid-template-columns:1fr;}}
+
+/* ── STATS ── */
+.home-stats{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.stat-pill{background:#fff;border:1px solid var(--border);border-radius:7px;padding:6px 12px;font-size:10px;color:var(--muted);box-shadow:var(--shadow);}
+.stat-pill strong{color:var(--text);font-size:13px;display:block;margin-bottom:1px;}
+
+/* ── IFRAME ── */
+#iframe-panel{display:none;flex:1;height:100%;}
+#iframe-panel.visible{display:flex;}
+#tool-iframe{width:100%;height:100%;border:none;background:#fff;}
+</style>
+</head>
+<body>
+
+<!-- TICKER BAR -->
+<div id="ticker-bar">
+  <div id="ticker-top">
+    <div id="ticker-inner"><div class="tick-item"><span class="tick-name">Caricamento...</span></div></div>
+    <div class="tick-time">
+      <span id="tick-clock">--:--</span>
+      <span class="tick-refresh" onclick="fetchTicker()">↻</span>
+    </div>
+  </div>
+  <div id="ticker-legend">
+    <span class="tl-item"><span class="tl-dot" style="background:#16a34a"></span>Prezzo live</span>
+    <span class="tl-item"><span class="tl-dot" style="background:#94a3b8"></span>Ultima chiusura</span>
+    <span class="tl-item" style="color:#1a6fcf">▲▼ Var% su chiusura ieri</span>
+    <span class="tl-item">EU chiude 17:30 · USA 22:00 · Futures 24h</span>
+    <span id="tl-status" style="margin-left:auto;font-size:8px;color:#94a3b8;padding-right:8px">—</span>
+  </div>
+</div>
+
+<div id="layout">
+
+<!-- ══ SIDEBAR ══ -->
+<aside id="sidebar">
+  <div class="sb-logo" onclick="toggleSidebar()">
+    <div class="sb-logo-icon">🦅</div>
+    <div class="sb-logo-text"><strong>RAPTOR</strong><span>TRADER HUB</span></div>
+  </div>
+  <nav>
+    <div class="nav-item active" onclick="showHome(this)" data-id="home">
+      <span class="nav-icon">🏠</span><span class="nav-label">Home</span>
+    </div>
+
+    <!-- ANALISI MACRO -->
+    <div class="nav-section">ANALISI MACRO</div>
+    <div class="nav-item" onclick="loadTool(this)" data-url="https://giorgiogoldoni.github.io/raptor-commad/" data-title="Command Center" data-id="command">
+      <span class="nav-icon">🎛️</span><span class="nav-label">Command Center</span><span class="badge badge-live">LIVE</span>
+    </div>
+    <div class="nav-item" onclick="loadTool(this)" data-url="https://giorgiogoldoni.github.io/portafoglio/macro.html" data-title="Macro Mover" data-id="macro-mover">
+      <span class="nav-icon">🔮</span><span class="nav-label">Macro Mover</span>
+    </div>
+    <div class="nav-item" onclick="loadTool(this)" data-url="https://giorgiogoldoni.github.io/raptor-signal/" data-title="RAPTOR Signal" data-id="signal">
+      <span class="nav-icon">📡</span><span class="nav-label">Signal</span>
+    </div>
+    <div class="nav-item" onclick="loadTool(this)" data-url="https://giorgiogoldoni.github.io/RAPTOR_SCENARIO_ENGINE/RSE.html" data-title="Scenario Engine" data-id="scenario">
+      <span class="nav-icon">🎯</span><span class="nav-label">Scenario Engine</span>
+    </div>
+
+    <!-- MONITOR -->
+    <div class="nav-section" style="color:#38bdf8">MONITOR</div>
+    <div class="nav-item monitor-item" onclick="loadTool(this)" data-url="https://giorgiogoldoni.github.io/MONITOR/" data-title="ETF Monitor" data-id="etf-monitor">
+      <span class="nav-icon">📊</span><span class="nav-label">ETF Monitor</span><span class="badge" style="background:#0f172a">MULTI</span>
+    </div>
+    <div class="nav-item monitor-item" onclick="loadTool(this)" data-url="https://giorgiogoldoni.github.io/scannerv2/" data-title="RAPTOR Scanner v2" data-id="scannerv2">
+      <span class="nav-icon">🔬</span><span class="nav-label">Scanner v2</span><span class="badge badge-new">NEW</span>
+    </div>
+    <div class="nav-item monitor-item" onclick="loadTool(this)" data-url="https://giorgiogoldoni.github.io/sniper/" data-title="RAPTOR Sniper" data-id="sniper">
+      <span class="nav-icon">⚡</span><span class="nav-label">Sniper</span><span class="badge badge-new">NEW</span>
+    </div>
+    <div class="nav-item monitor-item" onclick="loadTool(this)" data-url="https://giorgiogoldoni.github.io/radar-eventicf/" data-title="Radar Eventi CF" data-id="radar-eventi">
+      <span class="nav-icon">📅</span><span class="nav-label">Radar Eventi CF</span><span class="badge badge-new">NEW</span>
+    </div>
+    <div class="nav-item monitor-item" onclick="loadTool(this)" data-url="https://giorgiogoldoni.github.io/raptor-signal/" data-title="RAPTOR Signal" data-id="signal-m">
+      <span class="nav-icon">📡</span><span class="nav-label">Signal COT</span>
+    </div>
+
+    <!-- RAPTOR SUITE -->
+    <div class="nav-section">RAPTOR SUITE</div>
+    <div class="nav-item" onclick="loadTool(this)" data-url="https://giorgiogoldoni.github.io/raptor-one/" data-title="RAPTOR One" data-id="one">
+      <span class="nav-icon">🦅</span><span class="nav-label">ONE</span><span class="badge" style="background:#e07b00">NEW</span>
+    </div>
+    <div class="nav-item" onclick="loadTool(this)" data-url="https://giorgiogoldoni.github.io/chart/" data-title="RAPTOR Chart" data-id="chart">
+      <span class="nav-icon">📊</span><span class="nav-label">Chart</span><span class="badge badge-new">NEW</span>
+    </div>
+    <div class="nav-item" onclick="loadTool(this)" data-url="https://giorgiogoldoni.github.io/raptor-alert/" data-title="RAPTOR Alert v2.0" data-id="alert">
+      <span class="nav-icon">🔔</span><span class="nav-label">Alert</span><span class="badge" style="background:#16a34a">v2</span>
+    </div>
+    <div class="nav-item" onclick="loadTool(this)" data-url="https://giorgiogoldoni.github.io/raptor-ranking/" data-title="RAPTOR Ranking" data-id="ranking">
+      <span class="nav-icon">📊</span><span class="nav-label">Ranking</span>
+    </div>
+    <div class="nav-item" onclick="loadTool(this)" data-url="https://giorgiogoldoni.github.io/fixed/RAPTOR_Advanced.html" data-title="RAPTOR Advanced" data-id="advanced">
+      <span class="nav-icon">📈</span><span class="nav-label">Advanced</span>
+    </div>
+    <div class="nav-item" onclick="loadTool(this)" data-url="https://giorgiogoldoni.github.io/min-finder/" data-title="Min Finder" data-id="min-finder">
+      <span class="nav-icon">🔎</span><span class="nav-label">Min Finder</span><span class="badge" style="background:#dc2626">NEW</span>
+    </div>
+    <div class="nav-item" onclick="loadTool(this)" data-url="https://giorgiogoldoni.github.io/raptor-scanner/" data-title="RAPTOR Scanner" data-id="scanner">
+      <span class="nav-icon">🔭</span><span class="nav-label">Scanner</span>
+    </div>
+    <div class="nav-item" onclick="loadTool(this)" data-url="https://giorgiogoldoni.github.io/raptor-leva/RAPTOR_Leva.html" data-title="RAPTOR Leva" data-id="leva">
+      <span class="nav-icon">⚡</span><span class="nav-label">Leva</span>
+    </div>
+    <div class="nav-item" onclick="loadTool(this)" data-url="https://giorgiogoldoni.github.io/raptor-two/" data-title="RAPTOR Two" data-id="raptor-two">
+      <span class="nav-icon">🔁</span><span class="nav-label">Raptor Two</span>
+    </div>
+    <div class="nav-item" onclick="loadTool(this)" data-url="https://giorgiogoldoni.github.io/RAPTOR_SCENARIO_ENGINE/RSE_Metrics.html" data-title="RSE Metriche" data-id="rse-metrics">
+      <span class="nav-icon">📐</span><span class="nav-label">RSE Metriche</span>
+    </div>
+
+    <!-- ETF TEMATICI -->
+    <div class="nav-section">ETF TEMATICI</div>
+    <div class="nav-item" onclick="loadTool(this)" data-url="https://giorgiogoldoni.github.io/raptor-tematici/" data-title="RAPTOR Tematici" data-id="tematici">
+      <span class="nav-icon">🎨</span><span class="nav-label">Tematici</span><span class="badge badge-new">NEW</span>
+    </div>
+    <div class="nav-item" onclick="loadTool(this)" data-url="https://giorgiogoldoni.github.io/raptor-geografia/" data-title="RAPTOR Geografia" data-id="geografia">
+      <span class="nav-icon">🌍</span><span class="nav-label">Geografia</span><span class="badge badge-new">NEW</span>
+    </div>
+    <div class="nav-item" onclick="loadTool(this)" data-url="https://giorgiogoldoni.github.io/raptor-settoriali/" data-title="RAPTOR Settoriali" data-id="settoriali">
+      <span class="nav-icon">🏭</span><span class="nav-label">Settoriali</span><span class="badge badge-new">NEW</span>
+    </div>
+    <div class="nav-item" onclick="loadTool(this)" data-url="https://giorgiogoldoni.github.io/stoxx600/" data-title="STOXX 600" data-id="stoxx600">
+      <span class="nav-icon">🇪🇺</span><span class="nav-label">STOXX 600</span>
+    </div>
+
+    <!-- CONSULENZA -->
+    <div class="nav-section" style="color:#a78bfa">CONSULENZA</div>
+    <div class="nav-item consulenza-item" onclick="loadTool(this)" data-url="https://giorgiogoldoni.github.io/compass/" data-title="Compass — Gestione Dinamica" data-id="compass">
+      <span class="nav-icon">🧭</span><span class="nav-label">Compass</span><span class="badge" style="background:#7c3aed">NEW</span>
+    </div>
+    <div class="nav-item consulenza-item" onclick="loadTool(this)" data-url="https://giorgiogoldoni.github.io/raptor-wealth-meridian/" data-title="Wealth Meridian" data-id="wealth">
+      <span class="nav-icon">💰</span><span class="nav-label">Wealth Meridian</span>
+    </div>
+    <div class="nav-item consulenza-item" onclick="loadTool(this)" data-url="https://giorgiogoldoni.github.io/portafoglio/" data-title="RAPTOR Portfolio — Oracolo" data-id="portfolio">
+      <span class="nav-icon">🗂️</span><span class="nav-label">Portfolio</span><span class="badge" style="background:#f59e0b">NEW</span>
+    </div>
+    <div class="nav-item consulenza-item" onclick="loadTool(this)" data-url="https://giorgiogoldoni.github.io/fixed/RAPTOR_Advice.html" data-title="RAPTOR Advice" data-id="advice">
+      <span class="nav-icon">💼</span><span class="nav-label">Advice</span>
+    </div>
+    <div class="nav-item consulenza-item" onclick="loadTool(this)" data-url="https://giorgiogoldoni.github.io/trader/RAPTOR_Docs.html" data-title="Docs" data-id="docs">
+      <span class="nav-icon">📚</span><span class="nav-label">Docs</span>
+    </div>
+  </nav>
+  <div class="sb-bottom">
+    <div class="status-row">
+      <div class="dot"></div>
+      <span><strong id="sb-etf-count">520</strong> ETF · JSON Live</span>
+    </div>
+  </div>
+</aside>
+
+<!-- ══ MAIN ══ -->
+<div id="main">
+  <div id="topbar">
+    <div class="tb-back" onclick="showHome(null)">← Home</div>
+    <span style="color:var(--border)">|</span>
+    <span id="tb-title">—</span>
+    <a id="tb-ext" class="tb-ext" href="#" target="_blank">↗ Apri in nuova tab</a>
+  </div>
+
+  <div id="home-panel">
+    <!-- HEADER -->
+    <div class="home-header">
+      <div style="font-size:32px;line-height:1">🦅</div>
+      <div class="home-title">
+        <h1>RAPTOR Trader Hub</h1>
+        <p>RAPID ANALYSIS &amp; PORTFOLIO TRADING OPERATIONS REPORT · v4.0</p>
+      </div>
+    </div>
+
+    <!-- STATS PILLS -->
+    <div class="home-stats">
+      <div class="stat-pill"><strong>2.253</strong>ETF Unici</div>
+      <div class="stat-pill"><strong id="stat-etf">1.269</strong>ETF in One</div>
+      <div class="stat-pill"><strong>828</strong>ETF in Two</div>
+      <div class="stat-pill"><strong>471</strong>ETF Leva</div>
+      <div class="stat-pill"><strong>26</strong>Moduli attivi</div>
+      <div class="stat-pill"><strong id="stat-regime" style="color:var(--green)">—</strong>Regime RSE</div>
+    </div>
+
+    <!-- REGIME BANNER -->
+    <div id="regime-widget">
+      <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:180px">
+        <div id="rw-dot" style="width:12px;height:12px;border-radius:50%;background:#94a3b8;flex-shrink:0;animation:blink 2s infinite"></div>
+        <div>
+          <div style="font-size:7.5px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;font-weight:700;margin-bottom:2px">Regime di Mercato — RSE Engine</div>
+          <div id="rw-regime">—</div>
+          <div id="rw-signals" style="font-size:9px;color:var(--muted);margin-top:3px">Caricamento...</div>
+        </div>
+      </div>
+      <div id="rw-top" style="display:flex;gap:6px;flex-wrap:wrap;flex:2;align-items:center">
+        <span style="font-size:10px;color:#94a3b8">Caricamento...</span>
+      </div>
+      <div style="flex-shrink:0;text-align:center">
+        <button onclick="loadCard('command')" style="background:var(--blue);color:#fff;border:none;border-radius:7px;padding:8px 16px;font-size:11px;font-weight:700;cursor:pointer;display:block;width:100%">🎛️ Command Center →</button>
+        <div id="rw-ts" style="font-size:8px;color:var(--muted);margin-top:5px"></div>
+      </div>
+    </div>
+
+    <!-- ══ ANALISI MACRO ══ -->
+    <div class="section-title"><span>📊</span> Analisi Macro — i 3 orizzonti</div>
+    <div class="macro-trio">
+      <div class="macro-card" style="--mc-color:#e07b00" onclick="loadCard('signal')">
+        <div class="mc-header">
+          <div class="mc-icon" style="background:#fff8f0;border:1px solid #f59e0b">📡</div>
+          <div><div class="mc-title">RAPTOR Signal</div><div class="mc-sub">Sentiment · Opzioni · Intermarket</div></div>
+        </div>
+        <div class="mc-horizon" style="background:#fff8f0;color:#e07b00;border:1px solid #f59e0b">⏱ BREVE · 2-4 settimane</div>
+        <div class="mc-desc">P/C Ratio CBOE · VIX · SKEW · Ratio intermarket USA+EU · Percentile storico 252gg</div>
+        <div style="display:flex;gap:12px;align-items:flex-end">
+          <div><div class="mc-value" id="signal-composite" style="color:#e07b00">—</div><div class="mc-label">Segnale composito</div></div>
+          <div><div style="font-size:13px;font-weight:600;color:var(--muted)" id="signal-vix">—</div><div class="mc-label">VIX</div></div>
+        </div>
+        <div class="mc-btn">Apri Signal <span class="mc-arrow">→</span></div>
+      </div>
+      <div class="macro-card" style="--mc-color:#8b5cf6" onclick="loadCard('macro-mover')">
+        <div class="mc-header">
+          <div class="mc-icon" style="background:#faf5ff;border:1px solid #a78bfa">🔮</div>
+          <div><div class="mc-title">Macro Mover</div><div class="mc-sub">Fondamentali · Oracolo · Allocazione</div></div>
+        </div>
+        <div class="mc-horizon" style="background:#faf5ff;color:#8b5cf6;border:1px solid #a78bfa">📅 MEDIO · 1-3 mesi</div>
+        <div class="mc-desc">CPI · Fed Funds · Yield Curve · HY Spread · Classificatore scenari · Oracolo Groq</div>
+        <div style="display:flex;gap:12px;align-items:flex-end">
+          <div><div class="mc-value" id="macro-regime" style="color:#8b5cf6">—</div><div class="mc-label">Regime macro</div></div>
+          <div><div style="font-size:13px;font-weight:600;color:var(--muted)" id="macro-cpi">—</div><div class="mc-label">CPI YoY</div></div>
+        </div>
+        <div class="mc-btn">Apri Macro Mover <span class="mc-arrow">→</span></div>
+      </div>
+      <div class="macro-card" style="--mc-color:#1a6fcf" onclick="loadCard('scenario')">
+        <div class="mc-header">
+          <div class="mc-icon" style="background:#eff6ff;border:1px solid #93c5fd">🎯</div>
+          <div><div class="mc-title">Scenario Engine</div><div class="mc-sub">Ciclo strutturale · Markov · 52 scenari</div></div>
+        </div>
+        <div class="mc-horizon" style="background:#eff6ff;color:#1a6fcf;border:1px solid #93c5fd">🔭 LUNGO · 6-18 mesi</div>
+        <div class="mc-desc">20 indicatori USA/EU/Asia · Markov chain · Duration-Adjusted · Forecast 4w→12m</div>
+        <div style="display:flex;gap:12px;align-items:flex-end">
+          <div><div class="mc-value" id="engine-regime" style="color:#1a6fcf">—</div><div class="mc-label">Regime RSE</div></div>
+          <div><div style="font-size:13px;font-weight:600;color:var(--muted)" id="engine-score">—</div><div class="mc-label">Score</div></div>
+        </div>
+        <div class="mc-btn">Apri Engine <span class="mc-arrow">→</span></div>
+      </div>
+    </div>
+
+    <!-- ══ MONITOR ══ -->
+    <div class="section-title monitor-title"><span>📊</span> Monitor — Posizionamento &amp; Flussi</div>
+    <div class="monitor-trio">
+      <div class="monitor-card" style="--mc-color:#38bdf8" onclick="loadCard('etf-monitor')">
+        <div class="mc-header">
+          <div class="mc-icon" style="background:#132040;border:1px solid #1a2e4a">📊</div>
+          <div><div class="mc-title">ETF Monitor</div><div class="mc-sub">Holdings · CFTC COT · Movimenti strategici</div></div>
+        </div>
+        <div class="mc-horizon" style="background:#132040;color:#38bdf8;border:1px solid #1a2e4a">📋 SETTIMANALE · 12 ETF multi-asset</div>
+        <div class="mc-desc">Holdings GMOM · RPAR · DBMF · AOA · AOR · MAGR · F701 · F703 · GAL · AOK · DWAW · DWUS · CFTC Leveraged Funds</div>
+        <div class="mc-btn">Apri Monitor <span class="mc-arrow">→</span></div>
+      </div>
+      <div class="monitor-card" style="--mc-color:#38bdf8" onclick="loadCard('scannerv2')">
+        <div class="mc-header">
+          <div class="mc-icon" style="background:#132040;border:1px solid #1a2e4a">🔬</div>
+          <div><div class="mc-title">Scanner v2</div><div class="mc-sub">700+ ETF · Segnali BUY/SELL · Score</div></div>
+        </div>
+        <div class="mc-horizon" style="background:#132040;color:#38bdf8;border:1px solid #1a2e4a">⚡ GIORNALIERO · JSON Live</div>
+        <div class="mc-desc">BUY1/2/3 · SELL · WATCH · Regime Hurst+ADX · Score per categoria · History segnali</div>
+        <div class="mc-btn">Apri Scanner <span class="mc-arrow">→</span></div>
+      </div>
+      <div class="monitor-card" style="--mc-color:#38bdf8" onclick="loadCard('sniper')">
+        <div class="mc-header">
+          <div class="mc-icon" style="background:#132040;border:1px solid #1a2e4a">⚡</div>
+          <div><div class="mc-title">Sniper</div><div class="mc-sub">Aggregatore segnali · Score composito</div></div>
+        </div>
+        <div class="mc-horizon" style="background:#132040;color:#38bdf8;border:1px solid #1a2e4a">🎯 4x GIORNO · Top 20</div>
+        <div class="mc-desc">8 fonti · Score composito · Top 20 con grafici · Aggiornamento 4 volte al giorno</div>
+        <div class="mc-btn">Apri Sniper <span class="mc-arrow">→</span></div>
+      </div>
+    </div>
+
+    <!-- ══ RAPTOR SUITE ══ -->
+    <div class="section-title"><span>🦅</span> RAPTOR Suite</div>
+    <div class="cards-grid">
+      <div class="card" style="--card-accent:#e07b00" onclick="loadCard('one')">
+        <div class="card-top"><div class="card-icon">🦅</div><div class="card-num"><strong>694</strong><span>ETF</span></div></div>
+        <h3>RAPTOR One <span class="sup-badge" style="background:var(--accent)">NEW</span></h3>
+        <p>Alert + Ranking + Grafici · Yahoo &amp; Stooq EU · 8 filtri combinati</p>
+        <div class="card-btn">APRI →</div>
+      </div>
+      <div class="card" style="--card-accent:#16a34a" onclick="loadCard('alert')">
+        <div class="card-top"><div class="card-icon">🔔</div><div class="card-num"><strong>~650</strong><span>ETF EU</span></div></div>
+        <h3>RAPTOR Alert <span class="sup-badge" style="background:#16a34a">v2.0</span></h3>
+        <p>KAMA veloce/lenta · SAR · Entrata/Stop/Target · Mail novità · JSON 2x/giorno</p>
+        <div class="card-btn">APRI →</div>
+      </div>
+      <div class="card" onclick="loadCard('ranking')">
+        <div class="card-top"><div class="card-icon">📊</div><div class="card-num"><strong id="rw-count-ranking">520</strong><span>ETF</span></div></div>
+        <h3>RAPTOR Ranking</h3>
+        <p>Score JSON Live · Classificazione automatica · STOP / USCITA / ATTENZIONE</p>
+        <div class="card-btn">APRI →</div>
+      </div>
+      <div class="card" onclick="loadCard('advanced')">
+        <div class="card-top"><div class="card-icon">📈</div><div class="card-num"><strong>700</strong><span>ETF</span></div></div>
+        <h3>RAPTOR Advanced</h3>
+        <p>6 pannelli grafici · Heikin-Ashi · KAMA · AO · RSI · Position Sizing</p>
+        <div class="card-btn">APRI →</div>
+      </div>
+      <div class="card" style="--card-accent:#0ea5e9" onclick="loadCard('chart')">
+        <div class="card-top"><div class="card-icon">📊</div><div class="card-num"><strong>545</strong><span>ETF</span></div></div>
+        <h3>RAPTOR Chart <span class="sup-badge" style="background:#0ea5e9">NEW</span></h3>
+        <p>Grafici interattivi · BUY1/2/3 · KAMA · AO · RSI · Hurst · Score composito</p>
+        <div class="card-btn">APRI →</div>
+      </div>
+      <div class="card" style="--card-accent:#dc2626" onclick="loadCard('min-finder')">
+        <div class="card-top"><div class="card-icon">🔎</div><div class="card-num"><strong>2.253</strong><span>ETF</span></div></div>
+        <h3>Min Finder <span class="sup-badge" style="background:#dc2626">NEW</span></h3>
+        <p>Scansione notturna · TOP 20 BUY1/2/3 · SAR + KAMA + OBV · Grafici completi</p>
+        <div class="card-btn">APRI →</div>
+      </div>
+      <div class="card" style="--card-accent:#0ea5e9" onclick="loadCard('scanner')">
+        <div class="card-top"><div class="card-icon">🔭</div><div class="card-num"><strong>370</strong><span>ETF</span></div></div>
+        <h3>RAPTOR Scanner</h3>
+        <p>19 indicatori · ER · Supertrend · KAMA · ADX · RSI · SAR · BUY/SELL/WATCH</p>
+        <div class="card-btn">APRI →</div>
+      </div>
+      <div class="card" style="--card-accent:#f59e0b" onclick="loadCard('leva')">
+        <div class="card-top"><div class="card-icon">⚡</div><div class="card-num"><strong>538</strong><span>ETF</span></div></div>
+        <h3>RAPTOR Leva</h3>
+        <p>Doppia KAMA · AO EMA3-EMA13 · VIX Regime · 4 provider · Score qualità</p>
+        <div class="card-btn">APRI →</div>
+      </div>
+      <div class="card" onclick="loadCard('raptor-two')">
+        <div class="card-top"><div class="card-icon">🔁</div><div class="card-num"><strong>828</strong><span>ETF</span></div></div>
+        <h3>RAPTOR Two</h3>
+        <p>Gestione dinamica · Python · Analisi avanzata portafoglio</p>
+        <div class="card-btn">APRI →</div>
+      </div>
+      <div class="card" style="--card-accent:#7c3aed" onclick="loadCard('rse-metrics')">
+        <div class="card-top"><div class="card-icon">📐</div><div class="card-num"><strong>20</strong><span>IND.</span></div></div>
+        <h3>RSE Metriche</h3>
+        <p>Metodologia v2.0 · 20 indicatori · Regime USA/EU/Asia · 52 scenari</p>
+        <div class="card-btn">APRI →</div>
+      </div>
+    </div>
+
+    <!-- ══ ETF TEMATICI ══ -->
+    <div class="section-title"><span>🗺️</span> ETF Tematici — Geografici — Settoriali</div>
+    <div class="etf-trio">
+      <div class="card" style="--card-accent:#f0883e" onclick="loadCard('tematici')">
+        <div class="card-top"><div class="card-icon">🎨</div><div class="card-num"><strong>150</strong><span>TEMATICI</span></div></div>
+        <h3>RAPTOR Tematici <span class="sup-badge" style="background:#f0883e">NEW</span></h3>
+        <p>13 gruppi · AI · Difesa · Energia · Biotech · Crypto · EV · KAMA veloce · BUY signal</p>
+        <div class="card-btn">APRI →</div>
+      </div>
+      <div class="card" style="--card-accent:#0e7a3a" onclick="loadCard('geografia')">
+        <div class="card-top"><div class="card-icon">🌍</div><div class="card-num"><strong>—</strong><span>GEO</span></div></div>
+        <h3>RAPTOR Geografia <span class="sup-badge" style="background:#0e7a3a">NEW</span></h3>
+        <p>PAESI + NEW AREA · KAMA veloce · Vortex · RVI · RS Line · Max 7 posizioni</p>
+        <div class="card-btn">APRI →</div>
+      </div>
+      <div class="card" style="--card-accent:#e07b00" onclick="loadCard('settoriali')">
+        <div class="card-top"><div class="card-icon">🏭</div><div class="card-num"><strong>—</strong><span>SETTORI</span></div></div>
+        <h3>RAPTOR Settoriali <span class="sup-badge" style="background:#e07b00">NEW</span></h3>
+        <p>Analisi settoriale · SAR + Vortex + RVI · Benchmark · Rotazione settori</p>
+        <div class="card-btn">APRI →</div>
+      </div>
+      <div class="card" style="--card-accent:#3b82f6" onclick="loadCard('stoxx600')">
+        <div class="card-top"><div class="card-icon">🇪🇺</div><div class="card-num"><strong>600</strong><span>TITOLI</span></div></div>
+        <h3>STOXX 600</h3>
+        <p>Analisi indice europeo · Filtri settoriali · Segnali operativi</p>
+        <div class="card-btn">APRI →</div>
+      </div>
+    </div>
+
+    <!-- ══ CONSULENZA ══ -->
+    <div class="section-title consulenza-title"><span>🧭</span> Consulenza — Analisi &amp; Gestione Cliente</div>
+    <div class="consulenza-trio">
+      <div class="consulenza-card" style="--mc-color:#7c3aed" onclick="loadCard('compass')">
+        <div class="mc-header">
+          <div class="mc-icon" style="background:#f5f3ff;border:1px solid #c4b5fd">🧭</div>
+          <div><div class="mc-title">Compass</div><div class="mc-sub">Gestione dinamica portafoglio</div></div>
+        </div>
+        <div class="mc-horizon" style="background:#f5f3ff;color:#7c3aed;border:1px solid #c4b5fd">🔄 DINAMICO · Ribilanciamento attivo</div>
+        <div class="mc-desc">Gestione dinamica · Allocazione tattica · Monitoraggio portafoglio cliente</div>
+        <div class="mc-btn">Apri Compass <span class="mc-arrow">→</span></div>
+      </div>
+      <div class="consulenza-card" style="--mc-color:#7c3aed" onclick="loadCard('wealth')">
+        <div class="mc-header">
+          <div class="mc-icon" style="background:#f5f3ff;border:1px solid #c4b5fd">💰</div>
+          <div><div class="mc-title">Wealth Meridian</div><div class="mc-sub">Analisi bisogni · IPS · PDF</div></div>
+        </div>
+        <div class="mc-horizon" style="background:#f5f3ff;color:#7c3aed;border:1px solid #c4b5fd">📋 ONBOARDING · Profilazione cliente</div>
+        <div class="mc-desc">IPS · SAA/TAA · PAC · Carico cliente · Generazione PDF · Analisi patrimoniale</div>
+        <div class="mc-btn">Apri Wealth Meridian <span class="mc-arrow">→</span></div>
+      </div>
+      <div class="consulenza-card" style="--mc-color:#7c3aed" onclick="loadCard('portfolio')">
+        <div class="mc-header">
+          <div class="mc-icon" style="background:#f5f3ff;border:1px solid #c4b5fd">🗂️</div>
+          <div><div class="mc-title">Portfolio Oracolo</div><div class="mc-sub">Macro × Momentum · Ribilanciamento</div></div>
+        </div>
+        <div class="mc-horizon" style="background:#f5f3ff;color:#7c3aed;border:1px solid #c4b5fd">🔮 MENSILE · 25 ETF universe</div>
+        <div class="mc-desc">Macro × Momentum · 25 ETF universe · Ribilanciamento automatico · Oracolo Groq</div>
+        <div class="mc-btn">Apri Portfolio <span class="mc-arrow">→</span></div>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div style="margin-top:20px;padding-top:12px;border-top:1px solid var(--border);display:flex;gap:20px;flex-wrap:wrap">
+      <div style="font-size:10px;color:var(--muted)">ETF MONITORATI<strong style="color:var(--text);display:block;font-size:12px" id="footer-count">520</strong></div>
+      <div style="font-size:10px;color:var(--muted)">MODULI<strong style="color:var(--text);display:block;font-size:12px">26</strong></div>
+      <div style="font-size:10px;color:var(--muted)">RANKING UPDATE<strong style="color:var(--text);display:block;font-size:12px" id="footer-ranking-ts">—</strong></div>
+      <div style="font-size:10px;color:var(--muted)">RSE UPDATE<strong style="color:var(--text);display:block;font-size:12px" id="footer-rse-ts">—</strong></div>
+      <div style="font-size:10px;color:var(--muted)">FONTE<strong style="color:var(--blue);display:block;font-size:12px">JSON · Yahoo</strong></div>
+    </div>
+  </div>
+
+  <div id="iframe-panel">
+    <iframe id="tool-iframe" src="about:blank" allowfullscreen></iframe>
+  </div>
+</div>
+</div>
+
+<script>
+const navItems=document.querySelectorAll('.nav-item');
+const homePanel=document.getElementById('home-panel');
+const iPanel=document.getElementById('iframe-panel');
+const topbar=document.getElementById('topbar');
+const iframe=document.getElementById('tool-iframe');
+
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('collapsed');}
+function loadCard(id){const el=document.querySelector(`.nav-item[data-id="${id}"]`);if(el)loadTool(el);}
+function loadTool(el){
+  if(!el)return;
+  const url=el.dataset.url,title=el.dataset.title||'Tool';
+  navItems.forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+  homePanel.style.display='none';
+  iPanel.classList.add('visible');
+  topbar.classList.add('visible');
+  document.getElementById('tb-title').textContent=title;
+  document.getElementById('tb-ext').href=url;
+  if(iframe.src!==url)iframe.src=url;
+  if(typeof gtag!=='undefined') gtag('event','open_tool',{tool_id:el.dataset.id,tool_name:title});
+}
+function showHome(el){
+  navItems.forEach(n=>n.classList.remove('active'));
+  const h=document.querySelector('.nav-item[data-id="home"]');
+  if(h)h.classList.add('active');
+  homePanel.style.display='block';
+  iPanel.classList.remove('visible');
+  topbar.classList.remove('visible');
+  iframe.src='about:blank';
+}
+
+// ── TICKER ──
+const TICKERS=[
+  {sym:'^GSPC',     label:'S&P 500',   fmt:'idx'},
+  {sym:'^IXIC',     label:'NASDAQ',    fmt:'idx'},
+  {sym:'^GDAXI',    label:'DAX',       fmt:'idx'},
+  {sym:'^STOXX50E', label:'EUROSTOXX', fmt:'idx'},
+  {sym:'FTSEMIB.MI',label:'FTSE MIB',  fmt:'idx'},
+  {sym:'GC=F',      label:'Oro $/oz',  fmt:'comm'},
+  {sym:'CL=F',      label:'WTI $/bl',  fmt:'comm'},
+  {sym:'^VIX',      label:'VIX',       fmt:'vix'},
+  {sym:'EURUSD=X',  label:'EUR/USD',   fmt:'fx'},
+  {sym:'FBTP.F',    label:'BTP Fut.',  fmt:'comm'},
+];
+
+const PROXIES=[
+  s=>`https://corsproxy.io/?${encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/'+encodeURIComponent(s)+'?interval=1d&range=5d')}`,
+  s=>`https://api.allorigins.win/get?url=${encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/'+encodeURIComponent(s)+'?interval=1d&range=5d')}`,
+  s=>`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/'+encodeURIComponent(s)+'?interval=1d&range=5d')}`,
+];
+
+function fmtVal(v,fmt){
+  if(v==null||isNaN(v))return'—';
+  if(fmt==='fx')return v.toFixed(4);
+  if(fmt==='vix')return v.toFixed(2);
+  if(fmt==='comm')return v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  return v>=1000?v.toLocaleString('it-IT',{maximumFractionDigits:0}):v.toFixed(2);
+}
+
+async function fetchOne(sym){
+  for(const proxy of PROXIES){
+    try{
+      const r=await fetch(proxy(sym),{signal:AbortSignal.timeout(8000)});
+      if(!r.ok)continue;
+      const raw=await r.json();
+      const body=raw.contents?JSON.parse(raw.contents):raw;
+      const meta=body?.chart?.result?.[0]?.meta;
+      if(!meta)continue;
+      const price=meta.regularMarketPrice??meta.chartPreviousClose;
+      const prev=meta.chartPreviousClose??meta.previousClose;
+      const chg=(prev&&prev!==0)?(price-prev)/prev*100:null;
+      const isLive=['REGULAR','PRE','POST'].includes(meta.marketState||'');
+      return{price,chg,isLive};
+    }catch(e){continue;}
+  }
+  throw new Error('proxy falliti');
+}
+
+async function fetchTicker(){
+  let results=await Promise.allSettled(TICKERS.map(t=>fetchOne(t.sym)));
+  results=await Promise.allSettled(results.map((res,i)=>
+    res.status==='fulfilled'?Promise.resolve(res.value):fetchOne(TICKERS[i].sym)
+  ));
+  const inner=document.getElementById('ticker-inner');
+  inner.innerHTML='';
+  let ok=0,live=0;
+  results.forEach((res,i)=>{
+    const isOk=res.status==='fulfilled';
+    const price=isOk?res.value.price:null;
+    const chg=isOk?res.value.chg:null;
+    const isLive=isOk&&res.value.isLive;
+    if(isOk){ok++;if(isLive)live++;}
+    const t=TICKERS[i];
+    const valStr=fmtVal(price,t.fmt);
+    const chgStr=chg!=null?((chg>=0?'+':'')+chg.toFixed(2)+'%'):'—';
+    const cls=chg==null?'tick-flat':chg>0?'tick-up':'tick-down';
+    const arrow=chg==null?'':chg>0?'▲':chg<0?'▼':'▸';
+    const liveDot=isLive?'<span style="font-size:7px;color:#16a34a;line-height:1;margin-left:1px">●</span>':'';
+    inner.innerHTML+=`<div class="tick-item">
+      <span class="tick-name">${t.label}${liveDot}</span>
+      <span class="tick-val">${valStr}</span>
+      <span class="tick-chg ${cls}">${arrow}${chgStr}</span>
+    </div>`;
+  });
+  const tls=document.getElementById('tl-status');
+  if(tls){const now=new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});tls.textContent=`${ok}/${TICKERS.length} · ${live} live · agg. ${now}`;}
+}
+
+function clock(){document.getElementById('tick-clock').textContent=new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
+setInterval(clock,1000);clock();fetchTicker();setInterval(fetchTicker,60000);
+
+// ── DATI MACRO ──
+const RSE_URL    = 'https://giorgiogoldoni.github.io/RAPTOR_SCENARIO_ENGINE/data/market_data_rse.json';
+const SIGNAL_URL = 'https://raw.githubusercontent.com/Giorgiogoldoni/raptor-signal/main/data/signal.json';
+const MACRO_URL  = 'https://giorgiogoldoni.github.io/portafoglio/data/latest.json';
+const RANKING_URL= 'https://giorgiogoldoni.github.io/raptor-ranking/data/ranking.json';
+
+const REGIME_COLORS={
+  BULL:'#16a34a',ESPANSIONE:'#22c55e',NEUTRO:'#d97706',
+  RALLENTAMENTO:'#f59e0b',BEAR:'#dc2626',
+};
+
+async function loadAllData(){
+  try{
+    const r=await fetch(RSE_URL+'?t='+Date.now(),{signal:AbortSignal.timeout(8000)});
+    const json=await r.json();
+    const meta=json.meta||{};
+    const regime=meta.regime||'—';
+    const col=REGIME_COLORS[regime]||'#64748b';
+    const dot=document.getElementById('rw-dot');
+    if(dot){dot.style.background=col;dot.style.boxShadow='0 0 10px '+col;}
+    const rwR=document.getElementById('rw-regime');
+    if(rwR){rwR.textContent=regime;rwR.style.color=col;}
+    const statR=document.getElementById('stat-regime');
+    if(statR){statR.textContent=regime;statR.style.color=col;}
+    const sigEl=document.getElementById('rw-signals');
+    if(sigEl)sigEl.textContent=(meta.regime_signals||[]).slice(0,2).join(' · ')||'—';
+    const tsEl=document.getElementById('rw-ts');
+    if(tsEl)tsEl.textContent='RSE: '+(meta.updated_it||'—');
+    const frse=document.getElementById('footer-rse-ts');
+    if(frse)frse.textContent=(meta.updated_it||'').split(' ')[1]||'—';
+    const er=document.getElementById('engine-regime');
+    if(er){er.textContent=regime;er.style.color=col;}
+    const es=document.getElementById('engine-score');
+    if(es)es.textContent=(meta.regime_score!=null?(meta.regime_score>0?'+':'')+meta.regime_score.toFixed(1):'—');
+  }catch(e){console.log('RSE err',e);}
+
+  try{
+    const r=await fetch(SIGNAL_URL+'?t='+Date.now(),{signal:AbortSignal.timeout(8000)});
+    const json=await r.json();
+    const comp=json.composite||'—';
+    const vix=json.latest?.vix;
+    const compEl=document.getElementById('signal-composite');
+    const SIGNAL_COLORS={'RISK-ON':'#16a34a','POSITIVO':'#16a34a','NEUTRO':'#d97706','CAUTO':'#f59e0b','RISK-OFF':'#dc2626'};
+    if(compEl){compEl.textContent=comp;compEl.style.color=SIGNAL_COLORS[comp]||'#e07b00';}
+    const vixEl=document.getElementById('signal-vix');
+    if(vixEl)vixEl.textContent=vix!=null?vix.toFixed(1):'—';
+  }catch(e){console.log('Signal err',e);}
+
+  try{
+    const r=await fetch(MACRO_URL+'?t='+Date.now(),{signal:AbortSignal.timeout(8000)});
+    const json=await r.json();
+    const sw=json.scenario_weights||[];
+    const last=sw[sw.length-1]||{};
+    const sc=last.scenarios||{};
+    const dom=Object.entries(sc).sort((a,b)=>b[1]-a[1])[0];
+    const meta_sc=(json.scenarios_meta||[]).find(s=>s.code===dom?.[0]);
+    const cpi=json.macro_indicators?.cpi_yoy;
+    const mr=document.getElementById('macro-regime');
+    if(mr&&meta_sc){mr.textContent=meta_sc.name||dom?.[0]||'—';mr.style.color=meta_sc.color||'#8b5cf6';}
+    const mc=document.getElementById('macro-cpi');
+    if(mc)mc.textContent=cpi!=null?cpi.toFixed(1)+'%':'—';
+  }catch(e){console.log('Macro err',e);}
+
+  try{
+    const r=await fetch(RANKING_URL+'?t='+Date.now(),{signal:AbortSignal.timeout(8000)});
+    const json=await r.json();
+    const meta=json.meta||{},data=json.data||[];
+    ['rw-count-ranking','stat-etf','footer-count','sb-etf-count'].forEach(id=>{
+      const el=document.getElementById(id);if(el)el.textContent=meta.total||data.length;
+    });
+    const fts=document.getElementById('footer-ranking-ts');
+    if(fts)fts.textContent=(meta.updated_it||'').split(' ')[1]||'—';
+    const top=data.filter(d=>d.signal==='BUY'&&(d.score||0)>80).slice(0,5);
+    const wrap=document.getElementById('rw-top');
+    if(wrap){
+      if(top.length){
+        wrap.innerHTML=top.map(d=>`<div onclick="loadCard('ranking')" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;padding:5px 10px;cursor:pointer;min-width:65px">
+          <div style="font-weight:700;color:#0ea5e9;font-size:11px">${d.display||d.ticker}</div>
+          <div style="color:#059669;font-size:9px;font-weight:600">${d.score}</div>
+        </div>`).join('');
+      }else{
+        wrap.innerHTML='<span style="font-size:10px;color:#94a3b8">Nessun BUY &gt;80</span>';
+      }
+    }
+  }catch(e){console.log('Ranking err',e);}
+}
+
+loadAllData();
+setInterval(loadAllData,5*60*1000);
+</script>
+</body>
+</html>
